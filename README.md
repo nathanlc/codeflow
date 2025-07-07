@@ -1,5 +1,5 @@
 # CodeFlow
-A collection of tools to help understanding a code base through interactive visualization.
+A collection of tools to understand a code base through interactive visualization.
 
 ## Features
 
