@@ -1,0 +1,42 @@
+{
+  "name": "codeflow",
+  "version": "1.0.0",
+  "description": "A tool to help understanding a code base through interactive visualization",
+  "private": true,
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
+    "dev:frontend": "cd packages/frontend && npm run dev",
+    "dev:backend": "cd packages/backend && npm run dev",
+    "install:all": "npm install && npm run install:frontend && npm run install:backend",
+    "install:frontend": "cd packages/frontend && npm install",
+    "install:backend": "cd packages/backend && npm install",
+    "lint": "npm run lint:frontend && npm run lint:backend",
+    "lint:frontend": "cd packages/frontend && npm run lint",
+    "lint:backend": "cd packages/backend && npm run lint",
+    "lint:fix": "npm run lint:fix:frontend && npm run lint:fix:backend",
+    "lint:fix:frontend": "cd packages/frontend && npm run lint:fix",
+    "lint:fix:backend": "cd packages/backend && npm run lint:fix",
+    "format": "npm run format:frontend && npm run format:backend",
+    "format:frontend": "cd packages/frontend && npm run format",
+    "format:backend": "cd packages/backend && npm run format",
+    "format:check": "npm run format:check:frontend && npm run format:check:backend",
+    "format:check:frontend": "cd packages/frontend && npm run format:check",
+    "format:check:backend": "cd packages/backend && npm run format:check"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "code-visualization",
+    "code-navigation", 
+    "symbol-explorer",
+    "react-flow",
+    "monaco-editor",
+    "codebase-exploration"
+  ],
+  "author": "",
+  "license": "MIT"
+}

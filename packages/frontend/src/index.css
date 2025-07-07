@@ -1,0 +1,127 @@
+/* React Flow styles */
+@import 'reactflow/dist/style.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: white;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.dark body {
+  background-color: #111827;
+}
+
+#root {
+  height: 100vh;
+  width: 100vw;
+  background-color: white;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.dark #root {
+  background-color: #111827;
+}
+
+/* Custom styles for clickable symbols */
+.monaco-editor .view-line .clickable-symbol {
+  cursor: pointer;
+  text-decoration: underline;
+  color: #3b82f6;
+}
+
+.monaco-editor .view-line .clickable-symbol:hover {
+  background-color: #e0f2fe;
+}
+
+/* Dark theme support for clickable symbols */
+.dark .monaco-editor .view-line .clickable-symbol {
+  color: #60a5fa;
+}
+
+.dark .monaco-editor .view-line .clickable-symbol:hover {
+  background-color: rgba(59, 130, 246, 0.2);
+}
+
+/* Custom styles for resizable handles */
+.react-resizable-handle {
+  background-color: #3b82f6 !important;
+  opacity: 0.7;
+  z-index: 1000 !important; /* Ensure it's above React Flow elements */
+  pointer-events: auto !important;
+  cursor: se-resize !important;
+}
+
+.react-resizable-handle:hover {
+  opacity: 1;
+  background-color: #2563eb !important;
+}
+
+/* Dark theme support for resize handles */
+.dark .react-resizable-handle {
+  background-color: #60a5fa !important;
+}
+
+.dark .react-resizable-handle:hover {
+  background-color: #3b82f6 !important;
+}
+
+/* Prevent React Flow from interfering with resize handles */
+.react-resizable-handle:active {
+  pointer-events: auto !important;
+}
+
+/* Additional specificity to ensure resize handles work */
+.react-resizable-handle::before {
+  pointer-events: none !important;
+}
+
+.react-resizable-handle::after {
+  pointer-events: none !important;
+}
+
+/* Ensure nodrag class prevents React Flow from handling events */
+.nodrag {
+  pointer-events: auto;
+}
+
+/* Resize handle should not trigger node dragging */
+.react-resizable-handle {
+  pointer-events: auto !important;
+  cursor: se-resize !important;
+}
+
+.nodrag .react-resizable-handle {
+  pointer-events: auto !important;
+  cursor: se-resize !important;
+}
+
+/* Focused line highlighting */
+.monaco-editor .focused-line {
+  background-color: rgba(255, 193, 7, 0.2) !important;
+  border-left: 3px solid #ffc107;
+}
+
+.monaco-editor .focused-line-glyph {
+  background-color: #ffc107;
+  width: 4px !important;
+}
+
+/* Dark theme support for focused lines */
+.dark .monaco-editor .focused-line {
+  background-color: rgba(251, 191, 36, 0.3) !important;
+  border-left: 3px solid #fbbf24;
+}
+
+.dark .monaco-editor .focused-line-glyph {
+  background-color: #fbbf24;
+}
