@@ -4,6 +4,7 @@ import React, {
   useRef,
   useContext,
   useCallback,
+  useMemo,
 } from 'react';
 import * as d3 from 'd3';
 import { ThemeContext } from '../contexts/ThemeContext';
@@ -46,31 +47,230 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
   }, [fetchData]);
 
   const getFileColor = fileName => {
-    const extension = fileName.split('.').pop();
+    const extension = fileName.split('.').pop()?.toLowerCase();
     switch (extension) {
+      // Web Technologies (Warm Gradient: Gold → Orange → Coral)
       case 'js':
       case 'ts':
-        return '#f0db4f'; // JavaScript/TypeScript - Yellow
+        return '#fbbf24'; // JavaScript/TypeScript - Warm Gold
       case 'jsx':
       case 'tsx':
-        return '#61dafb'; // React - Blue
-      case 'json':
-        return '#f7df1e'; // JSON - Light Yellow
+        return '#f97316'; // React - Vibrant Orange
+      case 'html':
+        return '#ef4444'; // HTML - Bright Red-Orange
+
+      // Styling Technologies (Cool Blues)
       case 'css':
       case 'scss':
-        return '#66d3fa'; // CSS/SCSS - Light Blue
-      case 'html':
-        return '#e34c26'; // HTML - Orange
+      case 'sass':
+      case 'less':
+      case 'styl':
+        return '#3b82f6'; // CSS/Styles - Pure Blue
+
+      // Dynamic Languages (Warm Reds to Magentas)
+      case 'rb':
+        return '#dc2626'; // Ruby - Deep Red
+      case 'erb':
+        return '#f472b6'; // ERB - Pink
+      case 'php':
+        return '#a855f7'; // PHP - Purple
+      case 'py':
+        return '#8b5cf6'; // Python - Violet
+
+      // System Languages (Cool Blues to Teals)
+      case 'go':
+        return '#06b6d4'; // Go - Cyan
+      case 'rs':
+        return '#0891b2'; // Rust - Teal
+      case 'c':
+      case 'cpp':
+      case 'cc':
+      case 'cxx':
+        return '#0f766e'; // C/C++ - Dark Teal
+      case 'cs':
+        return '#059669'; // C# - Emerald
+
+      // Mobile/Modern Languages (Purple Spectrum)
+      case 'swift':
+        return '#7c3aed'; // Swift - Purple
+      case 'kt':
+        return '#8b5cf6'; // Kotlin - Violet
+      case 'dart':
+        return '#3b82f6'; // Dart - Blue
+      case 'java':
+        return '#6366f1'; // Java - Indigo
+
+      // Data & Config (Harmonized Purples)
+      case 'json':
+      case 'csv':
+      case 'xml':
+      case 'yaml':
+      case 'yml':
+      case 'toml':
+        return '#a855f7'; // Data files - Bright Purple
+
+      // Tools & Scripts (Greens)
+      case 'sh':
+      case 'bash':
+      case 'zsh':
+        return '#10b981'; // Shell - Emerald
+      case 'sql':
+        return '#059669'; // SQL - Green
+
+      // Content & Media (Warm Neutrals)
       case 'md':
-        return '#c4c4c4'; // Markdown - Gray
+      case 'txt':
+        return '#6b7280'; // Documentation - Cool Gray
       case 'png':
       case 'jpg':
+      case 'jpeg':
+      case 'gif':
       case 'svg':
-        return '#ff9800'; // Images - Amber
+      case 'webp':
+        return '#f59e0b'; // Images - Amber
+
       default:
-        return '#9e9e9e'; // Default - Gray
+        return '#9ca3af'; // Default - Neutral Gray
     }
   };
+
+  // Complete legend data for file type colors
+  const allLegendData = useMemo(
+    () => [
+      // Web Technologies (Warm Gradient)
+      { label: 'js/ts', color: '#fbbf24', extensions: ['js', 'ts'] },
+      { label: 'jsx/tsx', color: '#f97316', extensions: ['jsx', 'tsx'] },
+      { label: 'html', color: '#ef4444', extensions: ['html'] },
+
+      // Styling Technologies (Cool Blues)
+      {
+        label: 'css/styles',
+        color: '#3b82f6',
+        extensions: ['css', 'scss', 'sass', 'less', 'styl'],
+      },
+
+      // Dynamic Languages (Warm Reds to Magentas)
+      { label: 'rb', color: '#dc2626', extensions: ['rb'] },
+      { label: 'erb', color: '#f472b6', extensions: ['erb'] },
+      { label: 'php', color: '#a855f7', extensions: ['php'] },
+      { label: 'py', color: '#8b5cf6', extensions: ['py'] },
+
+      // System Languages (Cool Blues to Teals)
+      { label: 'go', color: '#06b6d4', extensions: ['go'] },
+      { label: 'rs', color: '#0891b2', extensions: ['rs'] },
+      {
+        label: 'c/c++',
+        color: '#0f766e',
+        extensions: ['c', 'cpp', 'cc', 'cxx'],
+      },
+      { label: 'cs', color: '#059669', extensions: ['cs'] },
+
+      // Mobile/Modern Languages (Purple Spectrum)
+      { label: 'swift', color: '#7c3aed', extensions: ['swift'] },
+      { label: 'kt', color: '#8b5cf6', extensions: ['kt'] },
+      { label: 'dart', color: '#3b82f6', extensions: ['dart'] },
+      { label: 'java', color: '#6366f1', extensions: ['java'] },
+
+      // Data & Config (Harmonized Purples)
+      {
+        label: 'data',
+        color: '#a855f7',
+        extensions: ['json', 'csv', 'xml', 'yaml', 'yml', 'toml'],
+      },
+
+      // Tools & Scripts (Greens)
+      { label: 'shell', color: '#10b981', extensions: ['sh', 'bash', 'zsh'] },
+      { label: 'sql', color: '#059669', extensions: ['sql'] },
+
+      // Content & Media (Warm Neutrals)
+      { label: 'docs', color: '#6b7280', extensions: ['md', 'txt'] },
+      {
+        label: 'images',
+        color: '#f59e0b',
+        extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'],
+      },
+
+      { label: 'other', color: '#9ca3af', extensions: [] },
+    ],
+    []
+  );
+
+  // Function to get extensions present in the current data
+  const getVisibleExtensions = useCallback(dataTree => {
+    if (!dataTree) return new Set();
+
+    const extensions = new Set();
+
+    const traverse = node => {
+      if (node.children) {
+        // It's a directory, traverse children
+        node.children.forEach(traverse);
+      } else {
+        // It's a file, extract extension
+        const extension = node.name.split('.').pop()?.toLowerCase();
+        if (extension) {
+          extensions.add(extension);
+        }
+      }
+    };
+
+    traverse(dataTree);
+    return extensions;
+  }, []);
+
+  // Get dynamic legend based on visible file types
+  const getDynamicLegend = useCallback(
+    dataTree => {
+      const visibleExtensions = getVisibleExtensions(dataTree);
+      const dynamicLegend = [];
+
+      // Check each legend item to see if any of its extensions are visible
+      allLegendData.forEach(legendItem => {
+        if (legendItem.extensions.length === 0) {
+          // This is the "Other" category - include if there are extensions not covered by other categories
+          const coveredExtensions = new Set();
+          allLegendData.forEach(item => {
+            if (item.extensions.length > 0) {
+              item.extensions.forEach(ext => coveredExtensions.add(ext));
+            }
+          });
+
+          const uncoveredExtensions = Array.from(visibleExtensions).filter(
+            ext => !coveredExtensions.has(ext)
+          );
+
+          if (uncoveredExtensions.length > 0) {
+            // Create dynamic label for other category
+            const label = uncoveredExtensions.join(', ');
+            dynamicLegend.push({
+              ...legendItem,
+              label: label,
+            });
+          }
+        } else {
+          // Check if any of this item's extensions are present
+          const presentExtensions = legendItem.extensions.filter(ext =>
+            visibleExtensions.has(ext)
+          );
+
+          if (presentExtensions.length > 0) {
+            // Create dynamic label based on present extensions
+            const label = presentExtensions.join(', ');
+            dynamicLegend.push({
+              ...legendItem,
+              label: label,
+            });
+          }
+        }
+      });
+
+      return dynamicLegend;
+    },
+    [allLegendData, getVisibleExtensions]
+  );
+
+  // Get the current dynamic legend
+  const legendData = getDynamicLegend(data);
 
   const zoomed = useCallback(({ transform }, nodeGroup, hoverGroup) => {
     nodeGroup.attr('transform', transform);
@@ -162,7 +362,6 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
         );
 
       const root = pack(data);
-      const _focus = root;
 
       const svg = d3
         .select(svgRef.current)
@@ -274,7 +473,6 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
       // Set the initial zoom state to identity (no transform)
       // This way D3 starts from a known state
       svg.call(d3.zoom().transform, d3.zoomIdentity);
-      const _view = [width / 2, height / 2, Math.min(width, height)];
     }
   }, [data, theme, zoomed, applyFilter, buildFilePath]);
 
@@ -346,9 +544,10 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
 
       {error && <div className="text-red-500 mb-4">{error}</div>}
       <div className="flex-grow relative">
-        {/* Filter widget - floating in top-right corner */}
+        {/* Filter widget with legend - floating in top-right corner */}
         <div className="absolute top-4 right-4 z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 min-w-64">
-          <div className="flex items-center space-x-2">
+          {/* Filter input */}
+          <div className="flex items-center space-x-2 mb-3">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               className="h-4 w-4 text-gray-500 dark:text-gray-400"
@@ -371,6 +570,28 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
               onChange={e => setFilter(e.target.value)}
             />
           </div>
+
+          {/* Legend */}
+          {legendData.length > 0 && (
+            <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
+              <div className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-2">
+                File Types
+              </div>
+              <div className="grid grid-cols-2 gap-1">
+                {legendData.map((item, index) => (
+                  <div key={index} className="flex items-center space-x-2">
+                    <div
+                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: item.color }}
+                    ></div>
+                    <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <svg ref={svgRef} className="w-full h-full"></svg>
 
