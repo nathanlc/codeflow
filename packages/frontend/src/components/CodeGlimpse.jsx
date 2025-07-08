@@ -240,11 +240,10 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
           );
 
           if (uncoveredExtensions.length > 0) {
-            // Create dynamic label for other category
-            const label = uncoveredExtensions.join(', ');
+            // Always show "other" for uncovered extensions
             dynamicLegend.push({
               ...legendItem,
-              label: label,
+              label: 'other',
             });
           }
         } else {
