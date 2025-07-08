@@ -21,6 +21,7 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
   const [contextMenu, setContextMenu] = useState(null);
   const [normalizeMediaFiles, setNormalizeMediaFiles] = useState(true);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [focusedNode, setFocusedNode] = useState(null); // Track the currently focused directory
   const { theme } = useContext(ThemeContext);
   const svgRef = useRef();
 
@@ -48,6 +49,11 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  // Clear focused node when repository/directory changes
+  useEffect(() => {
+    setFocusedNode(null);
+  }, [repository]);
 
   const getFileColor = fileName => {
     const extension = fileName.split('.').pop()?.toLowerCase();
@@ -430,18 +436,59 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
   }, [contextMenu]);
 
   // Build file path from node data
-  const buildFilePath = useCallback(nodeData => {
-    const pathParts = [];
-    let current = nodeData;
+  const buildFilePath = useCallback(
+    nodeData => {
+      const pathParts = [];
+      let current = nodeData;
 
-    // Traverse up to root to build full path
-    while (current) {
-      pathParts.unshift(current.data.name);
-      current = current.parent;
+      // Traverse up to root to build full path
+      while (current) {
+        pathParts.unshift(current.data.name);
+        current = current.parent;
+      }
+
+      // Remove the first element (root) and join with '/'
+      let relativePath = pathParts.slice(1).join('/');
+
+      // If we have a focused node, prepend the focused path
+      if (focusedNode && focusedNode.length > 0) {
+        const focusPath = focusedNode.join('/');
+        relativePath = relativePath
+          ? `${focusPath}/${relativePath}`
+          : focusPath;
+      }
+
+      return relativePath;
+    },
+    [focusedNode]
+  );
+
+  // Function to get the subtree data for a focused node
+  const getFocusedData = useCallback((originalData, focusPath) => {
+    if (!focusPath || focusPath.length === 0) return originalData;
+
+    let current = originalData;
+    for (const pathSegment of focusPath) {
+      if (current.children) {
+        current = current.children.find(child => child.name === pathSegment);
+        if (!current) return originalData; // Path not found, return original
+      } else {
+        return originalData; // Path goes through a file, return original
+      }
     }
 
-    // Remove the first element (root) and join with '/'
-    return pathParts.slice(1).join('/');
+    return current;
+  }, []);
+
+  // Function to build path array from root to a node
+  const buildPathArray = useCallback(node => {
+    const path = [];
+    let current = node;
+    while (current && current.parent) {
+      path.unshift(current.data.name);
+      current = current.parent;
+    }
+    return path;
   }, []);
 
   useEffect(() => {
@@ -450,10 +497,16 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
       const height = svgRef.current.parentElement.offsetHeight;
 
       // Normalize data based on the normalizeMediaFiles setting
-      const normalizedData = normalizeDataForVisualization(
+      let normalizedData = normalizeDataForVisualization(
         data,
         normalizeMediaFiles
       );
+
+      // If we have a focused node, use its subtree as the root data
+      if (focusedNode) {
+        const focusedData = getFocusedData(normalizedData, focusedNode);
+        normalizedData = focusedData;
+      }
 
       const pack = data =>
         d3.pack().size([width, height]).padding(3)(
@@ -566,6 +619,19 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
             fileName: d.data.name,
             isDirectory: !!d.children,
           });
+        })
+        .on('dblclick', (event, d) => {
+          event.stopPropagation();
+
+          // Only allow focusing on directories
+          if (d.children) {
+            const pathToNode = buildPathArray(d);
+            const newFocusPath = focusedNode
+              ? [...focusedNode, ...pathToNode]
+              : pathToNode;
+            setFocusedNode(newFocusPath);
+            setContextMenu(null); // Close context menu if open
+          }
         });
 
       // Apply initial filter
@@ -594,6 +660,9 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
     buildFilePath,
     normalizeMediaFiles,
     normalizeDataForVisualization,
+    focusedNode,
+    getFocusedData,
+    buildPathArray,
   ]);
 
   // Apply filter when filter state changes
@@ -639,6 +708,32 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
           </svg>
         </button>
       </div>
+
+      {/* Breadcrumb navigation for focused directories */}
+      {focusedNode && focusedNode.length > 0 && (
+        <div className="mb-2 flex items-center text-sm text-gray-600 dark:text-gray-400">
+          <button
+            onClick={() => setFocusedNode(null)}
+            className="hover:text-gray-800 dark:hover:text-gray-200 font-medium"
+          >
+            📁 Root
+          </button>
+          {focusedNode.map((segment, index) => (
+            <div key={index} className="flex items-center">
+              <span className="mx-1">{'>'}</span>
+              <button
+                onClick={() => setFocusedNode(focusedNode.slice(0, index + 1))}
+                className="hover:text-gray-800 dark:hover:text-gray-200 font-medium"
+              >
+                📁 {segment}
+              </button>
+            </div>
+          ))}
+          <span className="ml-2 text-xs text-gray-500 dark:text-gray-500">
+            (Double-click directories to focus)
+          </span>
+        </div>
+      )}
 
       {showSettings && (
         <div className="mb-4 p-4 border rounded bg-gray-100 dark:bg-gray-800">
@@ -744,6 +839,11 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
                   </div>
                 ))}
               </div>
+              {!focusedNode && (
+                <div className="mt-2 text-xs text-gray-500 dark:text-gray-500 text-center">
+                  💡 Double-click folders to focus
+                </div>
+              )}
             </div>
           )}
         </div>
