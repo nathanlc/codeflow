@@ -154,7 +154,6 @@ export class FileService {
       }
     });
 
-    console.log('Parsed imports:', imports);
     return imports;
   }
 

@@ -124,7 +124,6 @@ function CodeNode({ data }) {
       target.closest('.react-resizable-handle');
 
     if (isResizeHandle) {
-      console.log('Resize handle clicked, preventing React Flow interference');
       event.stopPropagation();
       event.preventDefault();
 
@@ -142,7 +141,6 @@ function CodeNode({ data }) {
   const handleEditorDidMount = useCallback(
     (editor, monaco) => {
       editorRef.current = editor;
-      console.log('Editor mounted, onSymbolClick:', !!onSymbolClick);
 
       // Make monaco available globally for recenterEditor
       window.monaco = monaco;
@@ -163,16 +161,9 @@ function CodeNode({ data }) {
           if (word) {
             const lineContent = model.getLineContent(position.lineNumber);
             const wordText = word.word;
-            console.log(
-              'Cursor changed to word:',
-              wordText,
-              'in line:',
-              lineContent
-            );
 
             // Simple heuristic to detect symbols we want to navigate to
             if (isNavigableSymbol(wordText, lineContent, word)) {
-              console.log('Navigable symbol at cursor:', wordText);
               // Small delay to distinguish from regular cursor movements
               setTimeout(() => {
                 onSymbolClick(wordText, position, lineContent);
@@ -184,7 +175,6 @@ function CodeNode({ data }) {
 
       // Also try the direct mouse click approach
       editor.onMouseUp(e => {
-        console.log('Mouse up event:', e.target.type, e.target.position);
         if (
           e.target.type === monaco.editor.MouseTargetType.CONTENT_TEXT &&
           e.target.position &&
@@ -197,10 +187,8 @@ function CodeNode({ data }) {
           if (word) {
             const lineContent = model.getLineContent(position.lineNumber);
             const wordText = word.word;
-            console.log('Direct click on word:', wordText);
 
             if (isNavigableSymbol(wordText, lineContent, word)) {
-              console.log('Direct navigable symbol clicked:', wordText);
               onSymbolClick(wordText, position, lineContent);
             }
           }
@@ -255,9 +243,6 @@ function CodeNode({ data }) {
 
     // Look for JSX components (capitalized words in JSX context)
     if (/^[A-Z]/.test(word) && lineContent.includes('<')) {
-      console.log(
-        `Found potential JSX component: ${word} in line: ${lineContent}`
-      );
       return true;
     }
 
@@ -265,7 +250,6 @@ function CodeNode({ data }) {
     const wordEnd = wordInfo.startColumn + word.length - 1;
     const remainingLine = lineContent.substring(wordEnd);
     if (remainingLine.trim().startsWith('(')) {
-      console.log(`Found function call: ${word}`);
       return true;
     }
 
@@ -284,7 +268,6 @@ function CodeNode({ data }) {
       word.match(/^[a-zA-Z_$][a-zA-Z0-9_$]*$/) &&
       !htmlTags.includes(word.toLowerCase())
     ) {
-      console.log(`Found potential symbol: ${word}`);
       return true;
     }
 
@@ -310,7 +293,6 @@ function CodeNode({ data }) {
             ref={ref}
             className={`react-resizable-handle react-resizable-handle-${axis} nodrag`}
             onMouseDown={e => {
-              console.log('Resize handle mouse down');
               e.stopPropagation();
             }}
             style={{

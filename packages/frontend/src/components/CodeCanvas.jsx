@@ -32,10 +32,6 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
   // Handle recentering on symbol in a node
   const handleRecenter = useCallback(
     (nodeId, focusLine, focusColumn) => {
-      console.log(
-        `Recentering node ${nodeId} on line ${focusLine}, column ${focusColumn}`
-      );
-
       // Update the node to trigger a refocus
       setNodes(currentNodes => {
         return currentNodes.map(node => {
@@ -61,8 +57,6 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
   // Handle closing nodes with cascading deletion
   const handleNodeClose = useCallback(
     nodeId => {
-      console.log(`Closing node ${nodeId}`);
-
       // Function to recursively find all descendant nodes
       const findDescendantNodes = (parentNodeId, allNodes) => {
         const descendants = [];
@@ -90,7 +84,6 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
           nodeId,
           ...findDescendantNodes(nodeId, currentNodes),
         ];
-        console.log(`Removing nodes: ${nodesToRemove.join(', ')}`);
 
         // Update edges to remove any connected to the nodes being removed
         setEdges(currentEdges => {
@@ -124,8 +117,6 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
   // Handle symbol clicks to create definition boxes
   const handleSymbolClick = useCallback(
     sourceNodeId => async (symbolName, _position, _lineContent) => {
-      console.log(`Clicked symbol: ${symbolName} in node ${sourceNodeId}`);
-
       // Get the current nodes and edges state directly from callbacks to avoid stale closures
       let sourceNode = null;
       let currentNodes = [];
@@ -147,8 +138,6 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
         return;
       }
 
-      console.log('Found source node:', sourceNode);
-
       // Parse imports from the source file to find where this symbol comes from
       const sourceFilePath = sourceNode.data.filePath || initialFile;
       const imports = FileService.parseImports(
@@ -156,44 +145,25 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
         sourceFilePath
       );
 
-      // Add detailed logging of imports
-      imports.forEach((imp, idx) => {
-        console.log(`Import ${idx}:`, imp.symbol, 'from', imp.from);
-      });
-
       // Find the import that contains this symbol
       const relevantImport = imports.find(imp => imp.symbol === symbolName);
 
-      console.log(`Relevant import for ${symbolName}:`, relevantImport);
-
       if (!relevantImport) {
-        console.log(`No import found for symbol: ${symbolName}`);
-
         // Check if the symbol is defined locally in the same file
-        console.log(
-          `Checking for local definition of ${symbolName} in current file`
-        );
         const localSymbols = FileService.findSymbols(sourceNode.data.code);
-        console.log(
-          `Found ${localSymbols.length} local symbols:`,
-          localSymbols.map(s => `${s.name} (${s.type})`)
-        );
         const localSymbol = localSymbols.find(s => s.name === symbolName);
 
         if (localSymbol) {
-          console.log(`Found local definition for ${symbolName}:`, localSymbol);
           // Handle local symbol by recentering on its definition in the same node
           handleRecenter(sourceNodeId, localSymbol.line, localSymbol.column);
           return;
         }
 
-        console.log(`Symbol ${symbolName} not found locally either`);
         return;
       }
 
       // Try to load the file that contains this symbol
       let targetFilePath = relevantImport.resolvedPath;
-      console.log(`Original resolved path: ${targetFilePath}`);
 
       // Only add extension if the resolved path doesn't already have one
       if (!targetFilePath.includes('.')) {
@@ -203,11 +173,7 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
         } else {
           targetFilePath += '.js';
         }
-        console.log(`Added extension, now: ${targetFilePath}`);
       }
-
-      console.log(`Loading file for ${symbolName}: ${targetFilePath}`);
-      console.log('Original import:', relevantImport);
 
       // Try to load the file with different extensions if needed
       let fileData = null;
@@ -248,29 +214,22 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
       const uniquePaths = [...new Set(pathsToTry)];
 
       for (const pathToTry of uniquePaths) {
-        console.log(`Trying to load: ${pathToTry}`);
-
         try {
           fileData = await FileService.loadFile(pathToTry);
           targetFilePath = pathToTry; // Update to the successful path
-          console.log(`Successfully loaded: ${pathToTry}`);
           break;
         } catch (error) {
-          console.log(`Failed to load ${pathToTry}:`, error.message);
           // Continue to next path
         }
       }
 
       if (!fileData) {
-        console.log(`Could not load file for ${symbolName} with any extension`);
-        console.log(`Tried paths: ${uniquePaths.join(', ')}`);
         return;
       }
       const symbols = FileService.findSymbols(fileData.content);
       const targetSymbol = symbols.find(s => s.name === symbolName);
 
       if (!targetSymbol) {
-        console.log(`Symbol ${symbolName} not found in ${targetFilePath}`);
         return;
       }
 
@@ -282,7 +241,6 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
       );
 
       if (existingNode) {
-        console.log(`Node for ${symbolName} already exists`);
         return;
       }
 
@@ -292,16 +250,8 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
       );
 
       if (existingEdge) {
-        console.log(
-          `Edge for ${symbolName} from node ${sourceNodeId} already exists`
-        );
         return;
       }
-
-      console.log(`Creating new node for ${symbolName}`);
-      console.log(
-        `Current nodes count: ${currentNodes.length}, Current edges count: ${currentEdges.length}`
-      );
 
       // Create new node for the definition
       const newNodeId = nextNodeId.toString();
@@ -385,14 +335,8 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
         labelStyle: { fill: '#3b82f6', fontWeight: 600 },
       };
 
-      console.log(`Creating edge with ID: ${edgeId}`);
-
       setNodes(currentNodes => [...currentNodes, newNode]);
       setEdges(currentEdges => [...currentEdges, newEdge]);
-
-      console.log(
-        `Added node ${newNodeId} and edge ${edgeId} for ${symbolName}`
-      );
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -413,8 +357,6 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
   const addNewMainContext = useCallback(
     async filePath => {
       try {
-        console.log(`Adding new main context: ${filePath}`);
-
         const fileData = await FileService.loadFile(filePath);
         const symbols = FileService.findSymbols(fileData.content);
         const language = FileService.getLanguageFromPath(filePath);
@@ -494,7 +436,6 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
   // Initialize the canvas with the first node
   React.useEffect(() => {
     if (nodes.length === 0 && initialFile && !hasInitialized) {
-      console.log(`Loading initial file: ${initialFile}`);
       // Use the addNewMainContext function to create the initial node
       addNewMainContext(initialFile);
       // Notify parent that file has been processed
@@ -519,14 +460,12 @@ function CodeCanvas({ initialFile, onFileProcessed }) {
       );
 
       if (!isFileAlreadyOpen) {
-        console.log(`Adding new file from CodeGlimpse: ${initialFile}`);
         addNewMainContext(initialFile);
         // Notify parent that file has been processed
         if (onFileProcessed) {
           onFileProcessed(initialFile);
         }
       } else {
-        console.log(`File ${initialFile} is already open, skipping duplicate`);
         // Still notify parent that file has been processed (even if skipped)
         if (onFileProcessed) {
           onFileProcessed(initialFile);
