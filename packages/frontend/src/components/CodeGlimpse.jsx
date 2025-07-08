@@ -556,7 +556,6 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
           const filePath = buildFilePath(d);
 
           // Get coordinates relative to the SVG container
-          const _svgRect = svgRef.current.getBoundingClientRect();
           const containerRect =
             svgRef.current.parentElement.getBoundingClientRect();
 

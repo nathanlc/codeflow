@@ -146,36 +146,6 @@ app.get('/api/files', (req, res) => {
   }
 });
 
-// API routes for code analysis
-app.post('/api/analyze', (req, res) => {
-  // TODO: Implement Tree-sitter parsing and LSP integration
-  // For now, return mock data
-  const mockResponse = {
-    symbols: [
-      { name: 'hello', type: 'function', range: [0, 2] },
-      { name: 'greet', type: 'function', range: [2, 2] },
-    ],
-    dependencies: [],
-  };
-
-  res.json(mockResponse);
-});
-
-app.post('/api/goto-definition', (req, res) => {
-  // TODO: Implement LSP go-to-definition
-  // For now, return mock data
-  const mockResponse = {
-    file: 'utils.js',
-    position: { line: 5, character: 0 },
-    code: `function greet(name) {
-  const greeting = "Hello, " + name;
-  return greeting;
-}`,
-  };
-
-  res.json(mockResponse);
-});
-
 // Directory management
 let currentRepositoryPath = projectRoot; // Default to current project
 
