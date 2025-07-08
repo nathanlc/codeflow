@@ -295,56 +295,11 @@ app.get('/api/repository/glimpse-data', (req, res) => {
             getDirectoryStructure(fullPath, itemRelativePath)
           );
         } else {
-          // Filter out hidden files, README files, and other non-code files
-          if (
-            item.startsWith('.') ||
-            item.toLowerCase().startsWith('readme') ||
-            item.toLowerCase() === 'license' ||
-            item.toLowerCase() === 'changelog' ||
-            item.toLowerCase() === 'changelog.md' ||
-            item.toLowerCase() === 'contributing.md'
-          ) {
-            continue;
-          }
-
-          // Only include common code file extensions
-          const ext = path.extname(item).toLowerCase();
-          const validExtensions = [
-            '.js',
-            '.jsx',
-            '.ts',
-            '.tsx',
-            '.py',
-            '.java',
-            '.cpp',
-            '.c',
-            '.cs',
-            '.go',
-            '.rs',
-            '.php',
-            '.rb',
-            '.swift',
-            '.kt',
-            '.dart',
-            '.html',
-            '.css',
-            '.scss',
-            '.less',
-            '.json',
-            '.xml',
-            '.yaml',
-            '.yml',
-            '.sh',
-            '.sql',
-          ];
-
-          if (validExtensions.includes(ext)) {
-            structure.children.push({
-              name: item,
-              path: itemRelativePath,
-              size: stats.size,
-            });
-          }
+          structure.children.push({
+            name: item,
+            path: itemRelativePath,
+            size: stats.size,
+          });
         }
       }
 

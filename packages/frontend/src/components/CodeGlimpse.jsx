@@ -19,6 +19,8 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
   const [error, setError] = useState(null);
   const [showSettings, setShowSettings] = useState(false);
   const [contextMenu, setContextMenu] = useState(null);
+  const [normalizeMediaFiles, setNormalizeMediaFiles] = useState(true);
+  const [showTooltip, setShowTooltip] = useState(false);
   const { theme } = useContext(ThemeContext);
   const svgRef = useRef();
 
@@ -271,6 +273,76 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
   // Get the current dynamic legend
   const legendData = getDynamicLegend(data);
 
+  // Function to check if a file is a media file that should be normalized
+  const isMediaFile = useCallback(fileName => {
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    const mediaExtensions = [
+      // Images
+      'png',
+      'jpg',
+      'jpeg',
+      'gif',
+      'svg',
+      'webp',
+      'bmp',
+      'ico',
+      'tiff',
+      'tif',
+      // Fonts
+      'ttf',
+      'otf',
+      'woff',
+      'woff2',
+      'eot',
+      // Audio/Video (common in web/game development)
+      'mp3',
+      'wav',
+      'ogg',
+      'mp4',
+      'webm',
+      'avi',
+      'mov',
+      // Other media assets
+      'pdf',
+      'psd',
+      'ai',
+      'sketch',
+    ];
+    return mediaExtensions.includes(extension);
+  }, []);
+
+  // Function to normalize data for visualization
+  const normalizeDataForVisualization = useCallback(
+    (data, normalizeMedia) => {
+      if (!normalizeMedia) return data;
+
+      const NORMALIZED_MEDIA_SIZE = 1024; // 1KB equivalent
+
+      const normalizeNode = node => {
+        if (node.children) {
+          // It's a directory, process children
+          return {
+            ...node,
+            children: node.children.map(normalizeNode),
+          };
+        } else {
+          // It's a file, normalize size if it's a media file
+          const normalizedSize = isMediaFile(node.name)
+            ? NORMALIZED_MEDIA_SIZE
+            : node.size;
+
+          return {
+            ...node,
+            size: normalizedSize,
+          };
+        }
+      };
+
+      return normalizeNode(data);
+    },
+    [isMediaFile]
+  );
+
   const zoomed = useCallback(({ transform }, nodeGroup, hoverGroup) => {
     nodeGroup.attr('transform', transform);
     hoverGroup.attr('transform', transform); // Apply same transform to hover labels
@@ -352,6 +424,12 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
       const width = svgRef.current.parentElement.offsetWidth;
       const height = svgRef.current.parentElement.offsetHeight;
 
+      // Normalize data based on the normalizeMediaFiles setting
+      const normalizedData = normalizeDataForVisualization(
+        data,
+        normalizeMediaFiles
+      );
+
       const pack = data =>
         d3.pack().size([width, height]).padding(3)(
           d3
@@ -360,7 +438,7 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
             .sort((a, b) => b.value - a.value)
         );
 
-      const root = pack(data);
+      const root = pack(normalizedData);
 
       const svg = d3
         .select(svgRef.current)
@@ -473,7 +551,15 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
       // This way D3 starts from a known state
       svg.call(d3.zoom().transform, d3.zoomIdentity);
     }
-  }, [data, theme, zoomed, applyFilter, buildFilePath]);
+  }, [
+    data,
+    theme,
+    zoomed,
+    applyFilter,
+    buildFilePath,
+    normalizeMediaFiles,
+    normalizeDataForVisualization,
+  ]);
 
   // Apply filter when filter state changes
   useEffect(() => {
@@ -568,6 +654,40 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
               value={filter}
               onChange={e => setFilter(e.target.value)}
             />
+          </div>
+
+          {/* Normalize Media Files Option */}
+          <div className="border-t border-gray-200 dark:border-gray-600 pt-3 pb-3">
+            <label className="flex items-center space-x-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={normalizeMediaFiles}
+                onChange={e => setNormalizeMediaFiles(e.target.checked)}
+                className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <span className="text-xs text-gray-700 dark:text-gray-300">
+                Normalize media file sizes
+              </span>
+              <div className="relative">
+                <div
+                  className="w-3 h-3 rounded-full bg-gray-400 dark:bg-gray-500 text-white flex items-center justify-center cursor-help text-xs font-bold"
+                  onMouseEnter={() => setShowTooltip(true)}
+                  onMouseLeave={() => setShowTooltip(false)}
+                  onClick={e => e.stopPropagation()}
+                >
+                  ?
+                </div>
+                {showTooltip && (
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-48 px-3 py-2 text-xs text-white bg-gray-900 dark:bg-gray-800 rounded-lg shadow-lg z-10">
+                    <div className="text-center">
+                      Treat images and fonts as small files to reduce visual
+                      clutter
+                    </div>
+                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900 dark:border-t-gray-800"></div>
+                  </div>
+                )}
+              </div>
+            </label>
           </div>
 
           {/* Legend */}
