@@ -316,7 +316,7 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
     (data, normalizeMedia) => {
       if (!normalizeMedia) return data;
 
-      const NORMALIZED_MEDIA_SIZE = 1024; // 1KB equivalent
+      const NORMALIZED_MEDIA_SIZE = 100; // Very small size to minimize visual impact
 
       const normalizeNode = node => {
         if (node.children) {
