@@ -349,6 +349,20 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
 
     // Update font size of existing hover labels to compensate for zoom
     hoverGroup.selectAll('.hover-label').attr('font-size', 16 / transform.k);
+
+    // Adjust stroke width to maintain visual consistency when zooming
+    const strokeScaleFactor = 1 / transform.k;
+    nodeGroup.selectAll('circle').attr('stroke-width', function (d) {
+      if (d.children) {
+        return strokeScaleFactor;
+      }
+      // Maintain highlight stroke width proportionally
+      const currentStroke = d3.select(this).attr('stroke-width');
+      if (currentStroke && currentStroke !== 'null' && currentStroke !== '0') {
+        return 2 * strokeScaleFactor;
+      }
+      return null;
+    });
   }, []);
 
   // Smart case matching function
@@ -466,12 +480,16 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
         .attr('stroke', d =>
           d.children ? (theme === 'dark' ? '#4a5568' : '#999') : null
         )
+        .attr('stroke-width', d => (d.children ? 1 : null))
         .on('mouseover', function (event, d) {
-          // Highlight the hovered circle
-          d3.select(this).attr('stroke', '#000').attr('stroke-width', 2);
-
-          // Get current zoom transform to maintain constant font size
+          // Get current zoom transform for responsive sizing
           const currentTransform = d3.zoomTransform(svg.node());
+          const strokeWidth = 2 / currentTransform.k;
+
+          // Highlight the hovered circle
+          d3.select(this)
+            .attr('stroke', '#000')
+            .attr('stroke-width', strokeWidth);
 
           // Show names for the hovered item and all its parents
           const pathToRoot = [];
@@ -507,13 +525,17 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
           });
         })
         .on('mouseout', function (event, d) {
+          // Get current zoom transform for responsive sizing
+          const currentTransform = d3.zoomTransform(svg.node());
+          const baseStrokeWidth = 1 / currentTransform.k;
+
           // Reset the stroke style
           d3.select(this)
             .attr(
               'stroke',
               d.children ? (theme === 'dark' ? '#4a5568' : '#999') : null
             )
-            .attr('stroke-width', null);
+            .attr('stroke-width', d.children ? baseStrokeWidth : null);
 
           // Remove all hover labels
           hoverGroup.selectAll('.hover-label').remove();
