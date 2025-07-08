@@ -16,6 +16,48 @@ const MainView = () => {
     setSelectedTool('code-canvas');
   }, []);
 
+  // Handle directory change from CodeGlimpse
+  const handleChangeDirectory = useCallback(
+    async directoryPath => {
+      if (!repository) return;
+
+      try {
+        // Construct the full path by appending the directory to current repository path
+        // Handle both relative paths (like "src/components") and single directory names
+        const fullPath = directoryPath.startsWith('/')
+          ? directoryPath
+          : `${repository.path}/${directoryPath}`.replace(/\/+/g, '/');
+
+        // Validate the directory path with the backend
+        const response = await fetch('/api/repository/validate', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ path: fullPath }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Invalid directory path');
+        }
+
+        const repositoryData = await response.json();
+
+        // Update the repository state
+        setRepository({
+          path: fullPath,
+          name: repositoryData.name,
+          type: 'local',
+        });
+      } catch (error) {
+        console.error('Failed to change directory:', error);
+        // You might want to show an error message to the user here
+      }
+    },
+    [repository]
+  );
+
   // Handle when CodeCanvas has processed a file
   const handleFileProcessed = useCallback(() => {
     setCodeCanvasInitialFile(null);
@@ -108,7 +150,11 @@ const MainView = () => {
           <div
             className={`h-full ${selectedTool === 'code-glimpse' ? 'block' : 'hidden'}`}
           >
-            <CodeGlimpse onOpenInCodeCanvas={handleOpenInCodeCanvas} />
+            <CodeGlimpse
+              onOpenInCodeCanvas={handleOpenInCodeCanvas}
+              onChangeDirectory={handleChangeDirectory}
+              repository={repository}
+            />
           </div>
           <div
             className={`h-full ${selectedTool === 'code-canvas' ? 'block' : 'hidden'}`}

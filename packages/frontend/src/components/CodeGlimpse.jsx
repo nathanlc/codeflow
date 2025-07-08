@@ -9,7 +9,7 @@ import React, {
 import * as d3 from 'd3';
 import { ThemeContext } from '../contexts/ThemeContext';
 
-const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
+const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
   const [data, setData] = useState(null);
   const [filter, setFilter] = useState('');
   const [ignore, setIgnore] = useState(
@@ -42,7 +42,8 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
         setError(err.message);
         setData(null);
       });
-  }, [ignore]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ignore, repository]); // repository is needed to refetch when directory changes
 
   useEffect(() => {
     fetchData();
@@ -541,18 +542,16 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
           hoverGroup.selectAll('.hover-label').remove();
         })
         .on('click', (event, d) => {
-          // Only show context menu for files (not directories)
-          if (!d.children) {
-            event.stopPropagation();
-            const filePath = buildFilePath(d);
+          event.stopPropagation();
+          const filePath = buildFilePath(d);
 
-            setContextMenu({
-              x: event.pageX,
-              y: event.pageY,
-              filePath: filePath,
-              fileName: d.data.name,
-            });
-          }
+          setContextMenu({
+            x: event.pageX,
+            y: event.pageY,
+            filePath: filePath,
+            fileName: d.data.name,
+            isDirectory: !!d.children,
+          });
         });
 
       // Apply initial filter
@@ -747,31 +746,60 @@ const CodeGlimpse = ({ onOpenInCodeCanvas }) => {
             }}
             onClick={e => e.stopPropagation()}
           >
-            <button
-              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
-              onClick={() => {
-                if (onOpenInCodeCanvas) {
-                  onOpenInCodeCanvas(contextMenu.filePath);
-                }
-                setContextMenu(null);
-              }}
-            >
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
+            {!contextMenu.isDirectory && (
+              <button
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                onClick={() => {
+                  if (onOpenInCodeCanvas) {
+                    onOpenInCodeCanvas(contextMenu.filePath);
+                  }
+                  setContextMenu(null);
+                }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                />
-              </svg>
-              <span>Open in Code Canvas</span>
-            </button>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+                <span>Open in Code Canvas</span>
+              </button>
+            )}
+            {contextMenu.isDirectory && (
+              <button
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center space-x-2"
+                onClick={() => {
+                  if (onChangeDirectory) {
+                    onChangeDirectory(contextMenu.filePath);
+                  }
+                  setContextMenu(null);
+                }}
+              >
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-5l-2-2H5a2 2 0 00-2 2z"
+                  />
+                </svg>
+                <span>Change Directory</span>
+              </button>
+            )}
           </div>
         )}
       </div>
