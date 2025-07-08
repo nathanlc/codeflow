@@ -612,9 +612,25 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
           const containerRect =
             svgRef.current.parentElement.getBoundingClientRect();
 
+          // Calculate position and ensure it doesn't overflow
+          const menuWidth = 200; // Approximate menu width
+          const menuHeight = 100; // Approximate menu height
+          let x = event.clientX - containerRect.left + 15;
+          let y = event.clientY - containerRect.top - 10;
+
+          // Adjust if menu would overflow right edge
+          if (x + menuWidth > containerRect.width) {
+            x = event.clientX - containerRect.left - menuWidth - 15;
+          }
+
+          // Adjust if menu would overflow bottom edge
+          if (y + menuHeight > containerRect.height) {
+            y = event.clientY - containerRect.top - menuHeight + 10;
+          }
+
           setContextMenu({
-            x: event.clientX - containerRect.left,
-            y: event.clientY - containerRect.top,
+            x: Math.max(0, x),
+            y: Math.max(0, y),
             filePath: filePath,
             fileName: d.data.name,
             isDirectory: !!d.children,
@@ -679,7 +695,7 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
   };
 
   return (
-    <div className="p-4 h-full flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+    <div className="p-4 h-full flex flex-col bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 overflow-hidden">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-bold">Code Glimpse</h2>
         <button
@@ -711,15 +727,15 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
 
       {/* Breadcrumb navigation for focused directories */}
       {focusedNode && focusedNode.length > 0 && (
-        <div className="mb-2 flex items-center text-sm text-gray-600 dark:text-gray-400">
+        <div className="mb-2 flex items-center text-sm text-gray-600 dark:text-gray-400 overflow-x-auto">
           <button
             onClick={() => setFocusedNode(null)}
-            className="hover:text-gray-800 dark:hover:text-gray-200 font-medium"
+            className="hover:text-gray-800 dark:hover:text-gray-200 font-medium whitespace-nowrap"
           >
             📁 Root
           </button>
           {focusedNode.map((segment, index) => (
-            <div key={index} className="flex items-center">
+            <div key={index} className="flex items-center whitespace-nowrap">
               <span className="mx-1">{'>'}</span>
               <button
                 onClick={() => setFocusedNode(focusedNode.slice(0, index + 1))}
@@ -729,7 +745,7 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
               </button>
             </div>
           ))}
-          <span className="ml-2 text-xs text-gray-500 dark:text-gray-500">
+          <span className="ml-2 text-xs text-gray-500 dark:text-gray-500 whitespace-nowrap">
             (Double-click directories to focus)
           </span>
         </div>
@@ -760,7 +776,7 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
       {error && <div className="text-red-500 mb-4">{error}</div>}
       <div className="flex-grow relative">
         {/* Filter widget with legend - floating in top-right corner */}
-        <div className="absolute top-4 right-4 z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 min-w-64">
+        <div className="absolute top-4 right-4 z-10 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-3 w-64 max-w-64 max-h-96 overflow-y-auto">
           {/* Filter input */}
           <div className="flex items-center space-x-2 mb-3">
             <svg
@@ -852,10 +868,10 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
         {/* Context Menu */}
         {contextMenu && (
           <div
-            className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-48"
+            className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-48 max-w-64"
             style={{
-              left: contextMenu.x + 15,
-              top: contextMenu.y - 10,
+              left: contextMenu.x,
+              top: contextMenu.y,
             }}
             onClick={e => e.stopPropagation()}
           >
