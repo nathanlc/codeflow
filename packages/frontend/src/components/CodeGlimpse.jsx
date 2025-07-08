@@ -407,15 +407,25 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
     [filter, matchesFilter]
   );
 
-  // Handle clicks outside context menu to close it
+  // Handle clicks outside context menu and Esc key to close it
   useEffect(() => {
     const handleClickOutside = () => {
       setContextMenu(null);
     };
 
+    const handleKeyDown = event => {
+      if (event.key === 'Escape') {
+        setContextMenu(null);
+      }
+    };
+
     if (contextMenu) {
       document.addEventListener('click', handleClickOutside);
-      return () => document.removeEventListener('click', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('click', handleClickOutside);
+        document.removeEventListener('keydown', handleKeyDown);
+      };
     }
   }, [contextMenu]);
 
@@ -545,9 +555,14 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
           event.stopPropagation();
           const filePath = buildFilePath(d);
 
+          // Get coordinates relative to the SVG container
+          const _svgRect = svgRef.current.getBoundingClientRect();
+          const containerRect =
+            svgRef.current.parentElement.getBoundingClientRect();
+
           setContextMenu({
-            x: event.pageX,
-            y: event.pageY,
+            x: event.clientX - containerRect.left,
+            y: event.clientY - containerRect.top,
             filePath: filePath,
             fileName: d.data.name,
             isDirectory: !!d.children,
@@ -740,9 +755,8 @@ const CodeGlimpse = ({ onOpenInCodeCanvas, onChangeDirectory, repository }) => {
           <div
             className="absolute z-20 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg py-1 min-w-48"
             style={{
-              left: contextMenu.x,
-              top: contextMenu.y,
-              transform: 'translate(-50%, -100%)',
+              left: contextMenu.x + 15,
+              top: contextMenu.y - 10,
             }}
             onClick={e => e.stopPropagation()}
           >
