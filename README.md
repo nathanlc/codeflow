@@ -1,10 +1,13 @@
 # CodeFlow
-A collection of tools to understand a code base through interactive visualization.
+A collection of tools to understand a codebase through interactive visualization.
+
+## The problem
+Understanding a codebase you're not familiar with is not straightforward.
 
 ## Features
 
 ### Code Glimpse
-Get a glimpse of a code base. See its structure at a glance.
+Get a glimpse of a codebase. See its file structure at a glance.
 
 ### Code Canvas
 Dive in the implementation. Jump through symbol definitions and see their connections on a canvas.
